@@ -46,6 +46,7 @@ def train_model(
             gradient_accumulation_steps=args.gradient_accumulation_steps,
             gradient_checkpointing=False,
             weight_decay=0.01,
+            bf16=True,
             run_name=args.wandb_name,
             report_to='none',
             ddp_find_unused_parameters=False,
@@ -80,13 +81,13 @@ def train_model(
     if training_steps > 0:
         model = AutoModelForCausalLM.from_pretrained(
             base_model_name, 
-            load_in_8bit=True, 
+            torch_dtype=torch.bfloat16,
             device_map=gpu_id, 
         )
+        model.resize_token_embeddings(len(tokenizer))
         if peft_name is not None:
             model = PeftModel.from_pretrained(model, peft_name, is_trainable=True)
 
-        model.resize_token_embeddings(len(tokenizer))
         print_trainable_parameters(model)
         collator = DataCollatorForCompletionOnlyLM(
                         response_template=Instructions.response_split if exp_type == 'assistant' else Instructions_summary_n.response_split, 

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from peft import PeftModel
 from accelerate import Accelerator
-from transformers import LlamaTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, LlamaTokenizer, AutoModelForSequenceClassification
 import torch
 from datasets import load_dataset, disable_caching
 import numpy as np
@@ -70,7 +70,7 @@ def load_main_tokenizer(tokenier_name):
     DEFAULT_BOS_TOKEN = "<s>" 
     DEFAULT_UNK_TOKEN = "<unk>" 
 
-    tokenizer = LlamaTokenizer.from_pretrained(tokenier_name, use_fast = False)
+    tokenizer = AutoTokenizer.from_pretrained(tokenier_name, use_fast = False)
     tokenizer.add_special_tokens(
         {
             "eos_token": DEFAULT_EOS_TOKEN,

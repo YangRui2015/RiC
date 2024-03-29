@@ -37,7 +37,6 @@ def generate_data(
     ## load model 
     model = AutoModelForCausalLM.from_pretrained(
         model_path, 
-        # load_in_8bit=True, 
         torch_dtype=torch.bfloat16,  # fast inference
         device_map=gpu_id, 
     )
@@ -72,7 +71,7 @@ def generate_data(
     selected_dataset = reset_score_in_dataset(selected_dataset, tokenizer, exp_type=exp_type) #, [dataset[key] for key in scores_name_list])
     print(f"Size of the selected dataset: {len(selected_dataset)}")
 
-    batch_size = 1
+    batch_size = 1 # batch size > 1 will pad on the left and will negatively influence generation
     remove_columns = []
     for name in ['input_ids', 'prompt', 'text', 'response', 'query', 'prompt_with_score'] + scores_name_list:
         if name in selected_dataset.column_names:

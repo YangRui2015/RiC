@@ -25,11 +25,11 @@ class ScriptArguments:
     peft_name: Optional[str] = field(default='', metadata={'help': "path of the peft files"})
     num_prefer_points: Optional[int] = field(default=10)
     log_with: Optional[str] = field(default='wandb', metadata={"help": "use 'wandb' to log with wandb"})
-    save_directory: Optional[str] = field(default='./logs_trl/')
+    save_directory: Optional[str] = field(default='./logs_trl_eval/')
     wandb_name: Optional[str] = field(default='test', metadata={"help": "Name for this experiment"})
     reward_names:Optional[str] = field(default='harmless,helpful') 
     base_model_name: Optional[str] = field(default='meta-llama/Llama-2-7b-hf', metadata={"help": "local path to the base model or the huggingface id"})
-    train_reward_stats_path: Optional[str] = field(default='')
+    reward_stats_path: Optional[str] = field(default='')
     exp_type: Optional[str] = field(default='assistant', metadata={"help": "exp type, 'summary' or 'assistant' "})
 
 
@@ -38,7 +38,7 @@ script_args = parser.parse_args_into_dataclasses()[0]
 exp_type = script_args.exp_type
 base_model_name = script_args.base_model_name
 tokenier_name = script_args.base_model_name
-reward_stats_path = script_args.train_reward_stats_path if len(script_args.train_reward_stats_path) else script_args.train_dataset_path + '/all_reward_stat.npy'
+reward_stats_path = script_args.reward_stats_path if len(script_args.reward_stats_path) else None
 print('base model: ', base_model_name)
 
 peft_name = script_args.peft_name
@@ -79,7 +79,6 @@ set_seed(8888)
 tokenizer = load_main_tokenizer(tokenier_name)
 model = AutoModelForCausalLM.from_pretrained(
     base_model_name, 
-    # load_in_8bit=True, 
     torch_dtype=torch.bfloat16,  # fast inference
     device_map=gpu_id, 
 )

@@ -30,6 +30,7 @@ class ScriptArguments:
     num_origin_samples: Optional[int] = field(default=10000) 
     wandb_name: Optional[str] = field(default='ric_assistant_harmlesshelpful_offline20000_lr1e-4', metadata={"help": "Name for this experiment"})
     base_model_name: Optional[str] = field(default='meta-llama/Llama-2-7b-hf', metadata={"help": "local path to the base model or the huggingface id"})
+    peft_name: Optional[str] = field(default='', metadata={"help": "local path to the peft model"})
     reward_names:Optional[str] = field(default='harmless,helpful') 
     train_dataset_path: Optional[str] = field(default='./datasets/all_full_train_harmhelp.hf')
     train_reward_stats_path: Optional[str] = field(default='')
@@ -96,14 +97,14 @@ dataset = train_model(
 clean_gpu_memory()
 
 online_dataset = None
+model_path = base_model_name
 for i in range(script_args.num_online_iterations):
     print('iteration {} ...'.format(i))
     checkpoint_path = os.path.join(save_path, 'model_iter{}'.format(i))
     if i == 0 and script_args.training_steps == 0:
-        model_path = base_model_name
-        peft_name = base_model_name
+        ## skip the offline training from a saved lora parameter
+        peft_name = script_args.peft_name
     else:
-        model_path = checkpoint_path
         peft_name = checkpoint_path
 
     ### generation

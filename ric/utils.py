@@ -4,7 +4,7 @@ import copy
 import shutil
 from typing import Optional
 from peft import PeftModel
-from transformers import LlamaTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, LlamaTokenizer, AutoModelForSequenceClassification
 import torch
 from datasets import load_dataset, Dataset, concatenate_datasets, load_from_disk, disable_caching
 import numpy as np
@@ -411,7 +411,7 @@ def load_main_tokenizer(tokenier_name):
     DEFAULT_BOS_TOKEN = "<s>" 
     DEFAULT_UNK_TOKEN = "<unk>" 
 
-    tokenizer = LlamaTokenizer.from_pretrained(tokenier_name, use_fast = False)
+    tokenizer = AutoTokenizer.from_pretrained(tokenier_name, use_fast = False)
     tokenizer.add_special_tokens(
         {
             "eos_token": DEFAULT_EOS_TOKEN,
@@ -427,16 +427,18 @@ def get_clean_data(full_responses, full_prompts, remove_bad=False):
     full_prompts_clean = []
     full_responses_clean = []
     for i, response in enumerate(full_responses):
-        full_prompts[i] = full_prompts[i].strip('[PAD] ').strip('[PAD]').strip('<s>').strip('</s>').strip()
+        full_prompts[i] = full_prompts[i].strip('[PAD] ').strip('[PAD]').strip('<s>').strip('</s>').rstrip()
         response = response.strip('[PAD] ').strip('[PAD]').strip('<s>').strip('</s>')
-        temp_resp = response.replace(full_prompts[i], '').strip().strip('\n\n----').strip('\n\n----- ').strip()
+        temp_resp = response.replace(full_prompts[i], '').strip()
         if '</s>' in temp_resp:
             temp_resp = temp_resp[:temp_resp.rindex('</s>')]
+        if '<s>' in temp_resp:
+            temp_resp = temp_resp[temp_resp.rindex('<s>'):]
         temp_resp = temp_resp.split('\n\nHuman:')[0].strip()
         temp_resp = temp_resp.split('\nHuman:')[0].strip()
         temp_resp = temp_resp.split('\n\nAssistant:')[0].strip()
         temp_resp = temp_resp.split('\nAssistant:')[0].strip()
-        temp_resp = temp_resp.split('\n\n\n')[0].strip()
+        # temp_resp = temp_resp.split('\n\n\n')[0].strip()
         clean_resp = full_prompts[i] + ' ' + temp_resp
         if remove_bad and (('.....' in clean_resp) or (clean_resp.count(':)') >= 3)):
             ## pass bad sample
@@ -497,7 +499,7 @@ def sample_goals(size, num_rewards=2, rewards_list=None, maximum=0.9999):
 
         preferences = np.round(np.random.random((size, num_rewards)) * (high - low) + low, 1)
         for k in range(len(preferences)):
-            min_index = np.argmin(preferences)
+            min_index = np.argmin(preferences[k])
             for j in range(num_rewards):
                 if j != min_index:
                     preferences[k][j] = high
