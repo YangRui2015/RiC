@@ -55,7 +55,6 @@ rm_tokenizers = reward_models.rm_tokenizers
 def build_dataset(index, tokenizer, rm_tokenizers, split='train'):
     ds = load_dataset(hhrlhf_dataset_path, split=split)
     n = len(rm_tokenizers)
-    instructions = Instructions_n(n)
 
     # multiprocessing the dataset
     num_proc = Accelerator().num_processes
@@ -99,17 +98,6 @@ def build_dataset(index, tokenizer, rm_tokenizers, split='train'):
     for i in range(len(rewards_list)):
         ds_concat = ds_concat.add_column('score{}'.format(i+1), rewards_list[i])
 
-    def add_score(sample):
-        sample['prompt_with_score'] = sample['prompt'].rstrip('\n\nAssistant:') + ' ' 
-        for i in range(instructions.num_rewards):
-            sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(round(sample['score{}'.format(i+1)], 1)) + ' '
-        sample['prompt_with_score'] += '\n\nAssistant:'
-        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
-        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
-        sample["query"] = tokenizer.decode(sample["input_ids"])
-        return sample
-
-    ds_concat = ds_concat.map(add_score, batched=False, num_proc=20)
     ds_concat.set_format(type="torch")
     return ds_concat 
 
@@ -118,9 +106,7 @@ def build_dataset_summary(index, tokenizer, rm_tokenizers, split='train'):
     ds = load_dataset(summary_dataset_path, 'comparisons')
     ds = ds[split]
     ds = ds.filter(lambda x: x["info"]['post'] is not None and 100 < len(x["info"]['post']) < 1200, batched=False, num_proc=20)
-
     n = len(rm_tokenizers)
-    instructions = Instructions_summary_n(n)
 
     # multiprocessing the dataset
     num_proc = Accelerator().num_processes
@@ -164,35 +150,54 @@ def build_dataset_summary(index, tokenizer, rm_tokenizers, split='train'):
 
     for i in range(len(rewards_list)):
         ds = ds.add_column('score{}'.format(i+1), rewards_list[i])
-
-    def add_score(sample):
-        sample['prompt_with_score'] = sample['prompt'].rstrip('### Response:') + ' ' 
-        for i in range(instructions.num_rewards):
-            sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(round(sample['score{}'.format(i+1)], 1)) + ' '
-        sample['prompt_with_score'] += '### Response:'
-        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
-        sample["query"] = tokenizer.decode(sample["input_ids"])
-        return sample
-
-    ds = ds.map(add_score, batched=False, num_proc=20)
     ds.set_format(type="torch")
     return ds
 
+def add_score_summary(sample):
+    sample['prompt_with_score'] = sample['prompt'].rstrip('### Response:') + ' ' 
+    for i in range(instructions.num_rewards):
+        sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(round(sample['score{}'.format(i+1)], 1)) + ' '
+    sample['prompt_with_score'] += '### Response:'
+    sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+    sample["query"] = tokenizer.decode(sample["input_ids"])
+    return sample
+
+def add_score_assistant(sample):
+    sample['prompt_with_score'] = sample['prompt'].rstrip('\n\nAssistant:') + ' ' 
+    for i in range(instructions.num_rewards):
+        sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(round(sample['score{}'.format(i+1)], 1)) + ' '
+    sample['prompt_with_score'] += '\n\nAssistant:'
+    sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
+    sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+    sample["query"] = tokenizer.decode(sample["input_ids"])
+    return sample
+
+
+n = len(rm_tokenizers)
 if script_args.exp_type == 'assistant':
+    instructions = Instructions_n(n)
     train_data = build_dataset(gpu_id, tokenizer, rm_tokenizers, 'train')
 else:
+    instructions = Instructions_summary_n(n)
     train_data = build_dataset_summary(gpu_id, tokenizer, rm_tokenizers, 'train')
 
+# normalize dataset and save information
 if Accelerator().num_processes == 1:
-    train_data.save_to_disk(script_args.save_directory)
     mean_reward_lis = []
     std_reward_lis = []
+    train_data.set_format() # to python
     for i in range(reward_models.num_rewards):
         mean_reward = np.mean(train_data['score{}'.format(i+1)])
         std_reward = np.std(train_data['score{}'.format(i+1)])
         mean_reward_lis.append(mean_reward)
         std_reward_lis.append(std_reward)
+        norm_tensor = (np.array(train_data['score{}'.format(i+1)]) - mean_reward) / std_reward
+        train_data = train_data.remove_columns('score{}'.format(i+1)).add_column('score{}'.format(i+1), list(norm_tensor))
 
+    add_score = add_score_assistant if script_args.exp_type == 'assistant' else add_score_summary
+    train_data = train_data.map(add_score, batched=False, num_proc=20)
+    train_data.set_format(type="torch")
+    train_data.save_to_disk(script_args.save_directory)
     print(np.array([mean_reward_lis, std_reward_lis]).reshape(2, -1).T)
     np.save(script_args.save_directory + '/all_reward_stat.npy', np.array([mean_reward_lis, std_reward_lis]).reshape(2, -1).T)
 else:
@@ -201,17 +206,25 @@ else:
     accelerator.wait_for_everyone()
     if gpu_id == 0:
         train_data_all = concatenate_datasets([load_from_disk(script_args.save_directory + '/ind{}'.format(i)) for i in range(accelerator.num_processes)])
-        train_data_all.save_to_disk(script_args.save_directory)
         mean_reward_lis = []
         std_reward_lis = []
+        train_data_all.set_format()
         for i in range(reward_models.num_rewards):
-            mean_reward = train_data['score{}'.format(i+1)].mean().item()
-            std_reward = train_data['score{}'.format(i+1)].std().item()
+            mean_reward = np.mean(train_data_all['score{}'.format(i+1)])
+            std_reward = np.std(train_data_all['score{}'.format(i+1)])
             mean_reward_lis.append(mean_reward)
             std_reward_lis.append(std_reward)
+            norm_tensor = (np.array(train_data_all['score{}'.format(i+1)]) - mean_reward) / std_reward
+            train_data_all = train_data_all.remove_columns('score{}'.format(i+1)).add_column('score{}'.format(i+1), list(norm_tensor))
 
+        add_score = add_score_assistant if script_args.exp_type == 'assistant' else add_score_summary
+        train_data_all = train_data_all.map(add_score, batched=False, num_proc=20)
+        train_data_all.set_format(type="torch")
+        train_data_all.save_to_disk(script_args.save_directory)
         print(np.array([mean_reward_lis, std_reward_lis]).reshape(2, -1).T)
         np.save(script_args.save_directory + '/all_reward_stat.npy', np.array([mean_reward_lis, std_reward_lis]).reshape(2, -1).T)
+
+
 
 
 
