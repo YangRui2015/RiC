@@ -29,13 +29,12 @@ class ScriptArguments:
     learning_rate: Optional[float] = field(default=1e-5, metadata={"help": "the learning rate"})
     mini_batch_size: Optional[int] = field(default=1, metadata={"help": "the PPO minibatch size"})
     batch_size: Optional[int] = field(default=64, metadata={"help": "the batch size64"})
-    gradient_accumulation_steps: Optional[int] = field(
-        default=1, metadata={"help": "the number of gradient accumulation steps"}
-    )
+    gradient_accumulation_steps: Optional[int] = field(default=1, metadata={"help": "the number of gradient accumulation steps"})
     early_stopping: Optional[bool] = field(default=True, metadata={"help": "whether to early stop"})
     target: Optional[float] = field(default=3, metadata={"help": "target kl divergence of adaptive control"})
     init_kl_coef: Optional[float] = field(default=0.2,metadata={"help": "0.05 Initial KL penalty coefficient (used for adaptive and linear control)"},)
     max_grad_norm: Optional[float] = field(default=0.5, metadata={"help": "Maximum gradient norm for gradient clipping"})
+    load_in_8bit: Optional[bool] = field(default=True, metadata={"help": "loading model in 8 bit or bfloat16"})
     preference: Optional[float] = field(default=0.5, metadata={"help": "the weight for reward 1"})
     wandb_name: Optional[str] = field(default='morlhf_llamma2_klreg0.2', metadata={"help": "Name for this experiment"})
     base_model_name: Optional[str] = field(default='./merged_sft_summary', metadata={'help':"the path to the sft model; need to merge if using lora"})
@@ -134,12 +133,21 @@ train_dataset = dataset.shuffle()
 print(f"Size of the train set: {len(train_dataset)}")
 
 
-model = AutoModelForCausalLMWithValueHead.from_pretrained(
-    base_model_name,
-    load_in_8bit=True, 
-    peft_config=lora_config,
-    device_map=gpu_id,
-)
+if script_args.load_in_8bit:
+    model = AutoModelForCausalLMWithValueHead.from_pretrained(
+        base_model_name,
+        load_in_8bit=True,
+        peft_config=lora_config,
+        device_map=gpu_id,
+    )
+else:
+    model = AutoModelForCausalLMWithValueHead.from_pretrained(
+        base_model_name,
+        torch_dtype=torch.bfloat16,
+        peft_config=lora_config,
+        device_map=gpu_id,
+    )
+
 print_trainable_parameters(model)
 model.pretrained_model.resize_token_embeddings(len(tokenizer))
 optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=config.learning_rate)

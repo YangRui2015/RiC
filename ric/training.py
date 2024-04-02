@@ -35,9 +35,9 @@ def train_model(
             output_dir=os.path.join(args.save_directory, args.wandb_name),
             dataloader_drop_last=True,
             eval_steps=training_steps*2, # do not evaluate during training
-            save_steps=10000, 
+            save_steps=training_steps*2,
             save_strategy='steps', 
-            logging_steps=1,
+            logging_steps=10,
             per_device_train_batch_size=args.batch_size,
             per_device_eval_batch_size=args.batch_size,
             learning_rate=learning_rate,
@@ -79,11 +79,15 @@ def train_model(
 
     #### training 
     if training_steps > 0:
-        model = AutoModelForCausalLM.from_pretrained(
-            base_model_name, 
-            torch_dtype=torch.bfloat16,
-            device_map=gpu_id, 
-        )
+        if args.load_in_8bit:
+            model = AutoModelForCausalLM.from_pretrained(
+                base_model_name, 
+                load_in_8bit=True, device_map=gpu_id)
+        else: # load in bf 16
+            model = AutoModelForCausalLM.from_pretrained(
+                base_model_name, 
+                torch_dtype=torch.bfloat16, device_map=gpu_id)
+
         model.resize_token_embeddings(len(tokenizer))
         if peft_name is not None:
             model = PeftModel.from_pretrained(model, peft_name, is_trainable=True)

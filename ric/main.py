@@ -28,6 +28,7 @@ class ScriptArguments:
     max_grad_norm: Optional[float] = field(default=1, metadata={"help": "Maximum gradient norm for gradient clipping"})
     quantile_threshold: Optional[float] = field(default=0.7)
     num_origin_samples: Optional[int] = field(default=10000) 
+    load_in_8bit: Optional[bool] = field(default=True, metadata={"help": "loading model in 8 bit or bfloat16"})
     wandb_name: Optional[str] = field(default='ric_assistant_harmlesshelpful_offline20000_lr1e-4', metadata={"help": "Name for this experiment"})
     base_model_name: Optional[str] = field(default='meta-llama/Llama-2-7b-hf', metadata={"help": "local path to the base model or the huggingface id"})
     peft_name: Optional[str] = field(default='', metadata={"help": "local path to the peft model"})

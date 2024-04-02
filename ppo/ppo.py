@@ -28,9 +28,8 @@ class ScriptArguments:
     learning_rate: Optional[float] = field(default=1e-5, metadata={"help": "the learning rate"})
     mini_batch_size: Optional[int] = field(default=1, metadata={"help": "the PPO minibatch size"})
     batch_size: Optional[int] = field(default=64, metadata={"help": "the batch size"})
-    gradient_accumulation_steps: Optional[int] = field(
-        default=1, metadata={"help": "the number of gradient accumulation steps"}
-    )
+    load_in_8bit: Optional[bool] = field(default=True, metadata={"help": "loading model in 8 bit or bfloat16"})
+    gradient_accumulation_steps: Optional[int] = field(default=1, metadata={"help": "the number of gradient accumulation steps"})
     early_stopping: Optional[bool] = field(default=True, metadata={"help": "whether to early stop"})
     target: Optional[float] = field(default=3, metadata={"help": "target kl divergence of adaptive control"})
     init_kl_coef: Optional[float] = field(default=0.2,metadata={"help": "Initial KL penalty coefficient (used for adaptive and linear control)"},)
@@ -117,13 +116,21 @@ else:
 train_dataset = dataset.shuffle()
 print(f"Size of the train set: {len(train_dataset)}.")
 
+if script_args.load_in_8bit:
+    model = AutoModelForCausalLMWithValueHead.from_pretrained(
+        base_model_name,
+        load_in_8bit=True,
+        peft_config=lora_config,
+        device_map=gpu_id,
+    )
+else:
+    model = AutoModelForCausalLMWithValueHead.from_pretrained(
+        base_model_name,
+        torch_dtype=torch.bfloat16,
+        peft_config=lora_config,
+        device_map=gpu_id,
+    )
 
-model = AutoModelForCausalLMWithValueHead.from_pretrained(
-    base_model_name,
-    load_in_8bit=True,
-    peft_config=lora_config,
-    device_map=gpu_id,
-)
 print_trainable_parameters(model)
 model.pretrained_model.resize_token_embeddings(len(tokenizer))
 optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=config.learning_rate)

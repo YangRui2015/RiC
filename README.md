@@ -15,10 +15,15 @@ The trl package currently has an issue with its 'DataCollatorForCompletionOnlyLM
 
 ## 2. Usage
 ### 2.1 RiC
+```
+Note: To reproduce the results in the paper, ensure the same training steps, for example, (4 processes, batchsize=2, steps=20000), and load the model in 8bit (--load_in_8bit True). We have observed notable performance differences between 8-bit and 16-bit models, particularly in the summary task.
+```
+
+
 * **Preparing datasets**: the first step is to generate dataset for RiC training.
 ```
 cd ./ric
-CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch prepare_dataset_with_rewards.py --reward_names 'harmless,helpful' --exp_type 'assistant' --save_directory './datasets/train_harmhelp.hf'
+CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch prepare_dataset_with_rewards.py --reward_names 'harmless,helpful' --exp_type 'assistant' --save_directory './datasets/train_harmhelp.hf' 
 ```
 ```
 CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch prepare_dataset_with_rewards.py --reward_names 'summary,faithful' --exp_type 'summary' --save_directory './datasets/summary_pref1faithful.hf'
@@ -29,11 +34,11 @@ Here, 'exp_type' includes two types of tasks, i.e., 'assistant' and 'summary'. M
 
 Offline training:
 ```
-CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch main.py --train_dataset_path {path_to_corresponding_dataset} --exp_type 'assistant' --reward_names 'harmless,helpful' --training_steps 20000 --num_online_iterations 0 --wandb_name 'ric_assistant_harmlesshelpful_offline20000'
+CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch main.py --train_dataset_path {path_to_corresponding_dataset} --exp_type 'assistant' --reward_names 'harmless,helpful' --training_steps 20000 --num_online_iterations 0 --wandb_name 'ric_assistant_harmlesshelpful_offline20000' --batch_size 2 --load_in_8bit True
 ```
 Offline training + online training:
 ```
-CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch main.py --train_dataset_path {path_to_corresponding_dataset} --exp_type 'assistant' --reward_names 'harmless,helpful' --training_steps 20000 --online_training_steps 4000 --num_online_iterations 2 --wandb_name 'ric_assistant_harmlesshelpful_offline20000_onlineiter2'
+CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch main.py --train_dataset_path {path_to_corresponding_dataset} --exp_type 'assistant' --reward_names 'harmless,helpful' --training_steps 20000 --online_training_steps 4000 --num_online_iterations 2 --wandb_name 'ric_assistant_harmlesshelpful_offline20000_onlineiter2' --batch_size 2 --load_in_8bit True
 ```
 
 * **Evaluation**: After training, models are saved into 'save_directory' path. You can evaluate models using the evaluation.py.
