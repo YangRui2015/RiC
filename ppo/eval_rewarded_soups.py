@@ -93,6 +93,12 @@ else:
     instructions = Instructions_summary()
 print(f"Size of the validation set: {len(valid_dataset)}")
 
+
+valid_dataset = valid_dataset.remove_columns(['prompt', 'query'])
+for key in ['key', 'text', 'response']:
+    if key in valid_dataset.column_names:
+        valid_dataset = valid_dataset.remove_columns(key)
+
 def evaluate_model(temp_save_path, tokenizer, valid_dataset):
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
     valid_data_loader = DataLoader(valid_dataset, batch_size=script_args.mini_batch_size, drop_last=True, collate_fn=data_collator)
