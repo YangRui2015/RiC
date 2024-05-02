@@ -1,6 +1,6 @@
 # RiC: Multi-objective Alignment of Foundation Models with Dynamic Preference Adjustment
 
-Code for the paper "Rewards-in-Context: Multi-objective Alignment of Foundation Models with Dynamic Preference Adjustment". This repo is based on [trl](https://github.com/huggingface/trl).
+Code for the ICML 2024 paper "Rewards-in-Context: Multi-objective Alignment of Foundation Models with Dynamic Preference Adjustment". This repo is based on [trl](https://github.com/huggingface/trl).
 
 
 ## 1. Installation
@@ -97,7 +97,7 @@ If you find our work useful for your research, please cite:
 @article{yang2024rewards,
   title={Rewards-in-Context: Multi-objective Alignment of Foundation Models with Dynamic Preference Adjustment},
   author={Yang, Rui and Pan, Xiaoman and Luo, Feng and Qiu, Shuang and Zhong, Han and Yu, Dong and Chen, Jianshu},
-  journal={arXiv preprint arXiv:2402.10207},
+  journal={International Conference on Machine Learning},
   year={2024}
 }
 ```
