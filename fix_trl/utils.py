@@ -153,8 +153,8 @@ class DataCollatorForCompletionOnlyLM(DataCollatorForLanguageModeling):
                 else:
                     response_token_ids_end_idx = response_token_ids_start_idx + len(self.response_token_ids)
 
-                    # Make pytorch loss function ignore all tokens up through the end of the response key
-                    batch["labels"][i, :response_token_ids_end_idx] = self.ignore_index
+                # Make pytorch loss function ignore all tokens up through the end of the response key
+                batch["labels"][i, :response_token_ids_end_idx] = self.ignore_index
 
         else:
             for i in range(len(examples)):
