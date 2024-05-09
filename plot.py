@@ -49,29 +49,19 @@ def plot_points(dir, label, style='-*', color='b', shift=[0,0], txt_color='black
         if '.csv' in path:
             full_path = path 
             data = pd.read_csv(full_path)
+            # morlhf has less points, let the threshold larger to make the frontier better
             if 'ppo' in path and len(paths) <= 5:
                 threshold = 0.5
             obtained_scores.append([np.mean(data['obtained_score1']), np.mean(data['obtained_score2'])])
             if 'pref' in path:
-                if 'multirew_' in path:
-                    pref = path.split('multirew_')[-1].strip().split('/')[0]
-                    pref_lis.append(float(pref))
-                elif 'multirew' in path:
-                    pref = path.split('multirew')[-1].strip().split('/')[0].split('_')[0]
-                    pref_lis.append(float(pref))
-                else:
-                    pref = path.strip('.csv').split('pref')[-1].split('_')[0]
+                # get the preference
+                if 'eval_data_pref' in path:
+                    pref = path.split('eval_data_pref')[-1].strip().split('_')[0]
                     pref_lis.append(float(pref))
 
     print(pref_lis)
     desired_scores = np.array(desired_scores)
     obtained_scores = np.array(obtained_scores)
-
-    if 'helpful' in path and 'humor' in path:
-        if reverse:
-            obtained_scores = obtained_scores[:, ::-1]
-        if len(pref_lis):
-            pref_lis = [1 - x for x in pref_lis]
 
     if normalize_path is not None:
         norm_info = np.load(normalize_path)
