@@ -46,7 +46,7 @@ def train_model(
             gradient_accumulation_steps=args.gradient_accumulation_steps,
             gradient_checkpointing=False,
             weight_decay=0.01,
-            bf16=True,
+            bf16=True if args.bf16 else False,
             run_name=args.wandb_name,
             report_to='none',
             ddp_find_unused_parameters=False,

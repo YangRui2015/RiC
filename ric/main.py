@@ -18,7 +18,7 @@ class ScriptArguments:
     log_with: Optional[str] = field(default=None, metadata={"help": "use 'wandb' to log with wandb"})
     disable_wandb: Optional[str] = field(default=False, metadata={'help': 'Whether to disable wandb or not.'})
     save_directory: Optional[str] = field(default='./logs_trl/', metadata={'help':'path'})
-    learning_rate: Optional[float] = field(default=1e-5, metadata={"help": "the learning rate"})
+    learning_rate: Optional[float] = field(default=1e-5, metadata={"help": "the learning rate for online training"})
     batch_size: Optional[int] = field(default=1, metadata={"help": "the batch size"})
     training_steps: Optional[int] = field(default=20000, metadata={'help': 'number of training steps in the offline training'})
     online_training_steps: Optional[int] = field(default=4000, metadata={'help': 'number of training steps in the online training'})
@@ -29,6 +29,9 @@ class ScriptArguments:
     quantile_threshold: Optional[float] = field(default=0.7)
     num_origin_samples: Optional[int] = field(default=10000) 
     load_in_8bit: Optional[bool] = field(default=True, metadata={"help": "loading model in 8 bit or bfloat16"})
+    bf16: Optional[bool] = field(default=False, 
+                                 metadata={"help": "if True, training with bfloat16 (not supported by V100, but for A100, A40, A6000), otherwise we use fp32"}
+                                 )
     wandb_name: Optional[str] = field(default='ric_assistant_harmlesshelpful_offline20000_lr1e-4', metadata={"help": "Name for this experiment"})
     base_model_name: Optional[str] = field(default='meta-llama/Llama-2-7b-hf', metadata={"help": "local path to the base model or the huggingface id"})
     peft_name: Optional[str] = field(default='', metadata={"help": "local path to the peft model"})
