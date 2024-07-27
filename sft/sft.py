@@ -95,10 +95,12 @@ model.resize_token_embeddings(len(tokenizer))
 
 if exp_type == 'assistant':
     dataset = build_dataset(hhrlhf_dataset_path, tokenizer, split='train') 
-    collator = DataCollatorForCompletionOnlyLM(response_template=Instructions.response_split, tokenizer=tokenizer, mlm=False)
+    response_template_ids = tokenizer.encode(Instructions.response_split, add_special_tokens=False)[1:]  
+    collator = DataCollatorForCompletionOnlyLM(response_template=response_template_ids, tokenizer=tokenizer, mlm=False)
 else:
     dataset = build_dataset_summary(summary_dataset_path, tokenizer, split='train')
-    collator = DataCollatorForCompletionOnlyLM(response_template=Instructions_summary.response_split, tokenizer=tokenizer, mlm=False)
+    response_template_ids = tokenizer.encode(Instructions_summary.response_split, add_special_tokens=False)[1:]  
+    collator = DataCollatorForCompletionOnlyLM(response_template=response_template_ids, tokenizer=tokenizer, mlm=False)
 train_dataset = dataset.shuffle()
 print(f"Size of the train set: {len(train_dataset)}")
 

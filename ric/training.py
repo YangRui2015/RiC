@@ -7,7 +7,7 @@ from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 import numpy as np
 import pandas as pd
 from peft import LoraConfig, PeftModel
-from utils import Instructions, load_main_tokenizer, save_configs, Instructions_summary_n, print_trainable_parameters
+from utils import Instructions_n, load_main_tokenizer, save_configs, Instructions_summary_n, print_trainable_parameters
 from trl import set_seed
 disable_caching()
 
@@ -93,8 +93,12 @@ def train_model(
             model = PeftModel.from_pretrained(model, peft_name, is_trainable=True)
 
         print_trainable_parameters(model)
+        if exp_type == 'assistant':
+            response_template_ids = tokenizer.encode(Instructions_n.response_split, add_special_tokens=False)[1:]  
+        else:
+            response_template_ids = tokenizer.encode(Instructions_summary_n.response_split, add_special_tokens=False)[1:]  
         collator = DataCollatorForCompletionOnlyLM(
-                        response_template=Instructions.response_split if exp_type == 'assistant' else Instructions_summary_n.response_split, 
+                        response_template=response_template_ids, 
                         tokenizer=tokenizer, mlm=False)
 
         trainer = SFTTrainer(

@@ -8,10 +8,14 @@ Install the requirements.
 ```
 pip install -r requirements.txt
 ```
+
+The following issue has been fixed using token_ids directly for response_template as in https://huggingface.co/docs/trl/main/en/sft_trainer#train-on-completions-only.
+```
 Fix the trl package.
 
 
 The trl package currently has an issue with its 'DataCollatorForCompletionOnlyLM' implementation, wherein the first token of the template may be nonsensical and unmatched. Hence, it is necessary to make modifications to the trl/trainer/utils.py file within your trl package (usually under the path {path to conda or python}/lib/python3/site-packages), specifically the 'torch_call' function starting from line 119. Upon installing the trl package based on the requirements.txt, you can easily replace the trl/trainer/utils.py with the utils.py file located in the 'fix_trl' directory.
+```
 
 ## 2. Usage
 ### 2.1 RiC
