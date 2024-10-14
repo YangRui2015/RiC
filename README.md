@@ -2,6 +2,7 @@
 
 Code for the ICML 2024 paper "Rewards-in-Context: Multi-objective Alignment of Foundation Models with Dynamic Preference Adjustment". This repo is based on [trl](https://github.com/huggingface/trl).
 
+This readme file is for LLM tasks, please refer to the 'ric_txt2img' directory for the code for conditional diffusion model training.
 
 ## 1. Installation
 Install the requirements.
