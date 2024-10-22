@@ -4,7 +4,7 @@
 sh eval_jpeg_aes.sh
 
 ## Train
-# get the train json [here](https://drive.google.com/file/d/1QH_nZWSbPlrpRdtTI-mxzqC7lK2HlON6/view?usp=sharing)
+# get the train json at link https://drive.google.com/file/d/1QH_nZWSbPlrpRdtTI-mxzqC7lK2HlON6/view?usp=sharing
 sh train.sh
 
 
