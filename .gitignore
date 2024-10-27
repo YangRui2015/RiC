@@ -1,0 +1,9 @@
+ric_txt2img/results/*
+ric_txt2img/pretrained/*
+images/*
+ric_txt2img/requirements.txt
+ric_txt2img/eval_jpeg_aes_tmp.sh
+download_data.py
+check_data.py
+ric_txt2img/data/*
+ric_txt2img/experiments/

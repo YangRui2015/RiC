@@ -105,9 +105,9 @@ class ImageMetric():
     def get_model(self, rm, device):
         if rm == 'aesthetic_score':
             if self.clip_model is None and self.clip_preprocessor is None:
-                self.clip_model, self.clip_preprocessor = clip.load("/mnt/aigc_cq/private/siboliu/Models/openai_clip/ViT-L-14.pt", device=device)
+                self.clip_model, self.clip_preprocessor = clip.load("ViT-L/14", device=device)
             model = MLP(input_size=768)
-            s = torch.load("/mnt/aigc_cq/private/amandaaluo/own_code/AIGC/stable_diffusion_finetune/sd_train_1B_v1_multi_objective/pretrained/sac+logos+ava1-l14-linearMSE.pth") 
+            s = torch.load("pretrained/sac+logos+ava1-l14-linearMSE.pth") 
             model.load_state_dict(s, strict=True)
             model.to(device)
             model.eval()
@@ -149,7 +149,8 @@ class ImageMetric():
         
         return score.item()
 
-    def get_jpg_size(self, model, img_pil, caption):      
+    def get_jpg_size(self, model, img_pil, caption):   
+        img_pil = img_pil.resize((512, 512))   
         length = len(encode_jpeg(img_pil))
         ## uint8 : 1 byte (8 bits) per dim
         sizes_kb = length / 1000.0

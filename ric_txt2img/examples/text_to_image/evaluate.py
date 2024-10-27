@@ -7,15 +7,15 @@ import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 
-import sys
-sys.path.append("/mnt/aigc_cq/private/amandaaluo/own_code/multi_objective/diffusers")
+# import sys
+# sys.path.append("/mnt/aigc_cq/private/amandaaluo/own_code/multi_objective/diffusers")
 from examples.text_to_image.infer_text_to_image_with_preference_batch import get_samples_from_trainset
 from image_metric import ImageMetric
 from visualize_pareto import plot_points
 
 
 
-f = open("/mnt/aigc_cq/private/amandaaluo/dataset/multi_obj/coco_test_1k.txt", 'r')
+f = open("data/coco_test_1k.txt", 'r')
 data = f.readlines()
 VALIDATION_PROMPTS = [d.strip("\n") for d in data]
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     args = get_args()
 
     device = f"cuda:{args.device}"
-    json_file = "/mnt/aigc_cq/private/amandaaluo/dataset/multi_obj/multi_obj_with_clip_base.json"
+    json_file = "data/multi_obj_with_clip_base.json"
     rm1, rm2 = args.rm1, args.rm2
     rm1_samples, rm2_samples, mu1, sigma1, mu2, sigma2 = get_samples_from_trainset(json_file, key1=rm1, key2=rm2)
     prompts = VALIDATION_PROMPTS

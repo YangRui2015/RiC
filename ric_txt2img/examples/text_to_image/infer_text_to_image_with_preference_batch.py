@@ -9,7 +9,7 @@ from transformers import CLIPTextModel, CLIPTokenizer
 from diffusers import AutoencoderKL, DDPMScheduler, StableDiffusionPipeline, UNet2DConditionModel
 
 
-f = open("/mnt/aigc_cq/private/amandaaluo/dataset/multi_obj/coco_test_1k.txt", 'r')
+f = open("data/coco_test_1k.txt", 'r')
 data = f.readlines()
 VALIDATION_PROMPTS = [d.strip("\n") for d in data]
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     args = get_args()
     
     device = f"cuda:{args.device}"
-    json_file = "/mnt/aigc_cq/private/amandaaluo/dataset/multi_obj/multi_obj_with_clip_base.json"
+    json_file = "data/multi_obj_with_clip_base.json"
     rm1, rm2 = args.rm1, args.rm2
     rm1_samples, rm2_samples, mu1, sigma1, mu2, sigma2 = get_samples_from_trainset(json_file, key1=rm1, key2=rm2)
     prompts = VALIDATION_PROMPTS
@@ -84,8 +84,8 @@ if __name__ == "__main__":
     # model
     weight_dtype = torch.float32
     seed = 42
-    # pretrained_model_name_or_path = "/mnt/aigc_cq/shared/txt2img_models/stable-diffusion-v1-5/"
-    pretrained_model_name_or_path = "/mnt/aigc_cq/private/huye/model_weights/stable-diffusion-v1-5/"
+    # pretrained_model_name_or_path = "/mnt/aigc_cq/private/huye/model_weights/stable-diffusion-v1-5/"
+    pretrained_model_name_or_path = "stable-diffusion-v1-5/stable-diffusion-v1-5"
     unet_model_name_or_path = args.unet_model_name_or_path
     text_encoder = CLIPTextModel.from_pretrained(
                 pretrained_model_name_or_path, subfolder="text_encoder", revision=None, variant=None
