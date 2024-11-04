@@ -1,6 +1,7 @@
 # Ric in txt2img
 
 ## Evaluate
+Download model [here](https://huggingface.co/amandaa/ric_txt2img/tree/main) and put it ./experiments
 sh eval_jpeg_aes.sh
 
 ## Train

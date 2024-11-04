@@ -77,93 +77,6 @@ class MLP(torch.nn.Module):
 
 
 
-def encode_jpeg(x, quality=95):
-    """
-    x : pil_img
-    """
-    img = x
-    buffer = io.BytesIO()
-    img.save(buffer, "JPEG", quality=quality)
-    jpeg = buffer.getvalue()
-    return np.frombuffer(jpeg, dtype=np.uint8)
-
-
-# class ImageMetric():
-#     def __init__(self, rm1, rm2, device) -> None:
-#         self.device = device
-#         self.rm_names = [rm1, rm2]
-#         self.clip_model = None
-#         self.clip_preprocessor = None
-#         self.rms = [self.get_model(rm, device) for rm in [rm1, rm2]]
-
-#         # preprocess
-#         normalize = transforms.Normalize(
-#             mean=IMAGE_NET_MEAN,
-#             std=IMAGE_NET_STD)
-#         self.colorAes_transform = transforms.Compose([
-#             transforms.Resize((224, 224)),
-#             transforms.ToTensor(),
-#             normalize])
-
-#     def get_model(self, rm, device):
-#         if rm == 'aesthetic_score':
-#             if self.clip_model is None and self.clip_preprocessor is None:
-#                 self.clip_model, self.clip_preprocessor = clip.load("/mnt/aigc_cq/private/siboliu/Models/openai_clip/ViT-L-14.pt", device=device)
-#             model = MLP(input_size=768)
-#             s = torch.load("/mnt/aigc_cq/private/amandaaluo/own_code/AIGC/stable_diffusion_finetune/sd_train_1B_v1_multi_objective/pretrained/sac+logos+ava1-l14-linearMSE.pth") 
-#             model.load_state_dict(s, strict=True)
-#             model.to(device)
-#             model.eval()
-#             print('load aesthetic model')
-#             return model
-#         elif rm == 'jpeg_size':
-#             return None
-        
-#         else:
-#             NotImplementedError
-            
-#     def get_image_features(self, image, model, preprocess):
-#         image = preprocess(image).unsqueeze(0).to(self.device)
-#         with torch.no_grad():
-#             image_features = model.encode_image(image)
-#             # l2 normalize
-#             image_features /= image_features.norm(dim=-1, keepdim=True)
-#         self.image_features = image_features
-
-#         return image_features
-
-#     def get_score(self, prompt, image):
-#         scores = []
-#         for i in range(2):
-#             rm_name = self.rm_names[i]
-#             if rm_name == 'aesthetic_score':
-#                 score = self.get_aesthetic_score(self.rms[i], image)
-#             elif rm_name == 'jpeg_size':
-#                 score = self.get_jpg_size(self.rms[i], image, prompt)
-            
-#             scores.append(score)
-                
-
-#         return scores[0], scores[1]
-
-#     def get_aesthetic_score(self, aes_model, image):
-#         with torch.no_grad():
-#             with torch.autocast(device_type='cuda'):
-#                 image_features = self.get_image_features(image, self.clip_model, self.clip_preprocessor)
-#                 score = aes_model(image_features)
-        
-#         return score.item()
-
-
-#     def get_jpg_size(self, model, img_pil, caption):    
-#         img_pil = img_pil.resize((512, 512))  
-#         length = len(encode_jpeg(img_pil))
-#         ## uint8 : 1 byte (8 bits) per dim
-#         sizes_kb = length / 1000.0
-        
-#         return -sizes_kb
-
-
 DEVICE = 'cuda' 
 aes_model = MLP(input_size=768).to(DEVICE)
 s = torch.load("pretrained/sac+logos+ava1-l14-linearMSE.pth")  # https://github.com/christophschuhmann/improved-aesthetic-predictor
@@ -218,12 +131,11 @@ class ImageMetric():
 
     def get_jpg_size(self, img_pil):      
         img_pil = img_pil.resize((512, 512))
-        length = len(encode_jpeg(img_pil))
+        length = len(self.encode_jpeg(img_pil))
         ## uint8 : 1 byte (8 bits) per dim
         sizes_kb = length / 1000.0
         
         return -sizes_kb
-
 
 
 def convert_binary_pil(img_binary):
@@ -293,6 +205,7 @@ if __name__ == "__main__":
                     item['img_name'] = f'{unique_id}.png'
                     del item['jpg'] # avoid save error
                     
+                    pil_img = Image.open(os.path.join(img_path, f'{unique_id}.png'))
                     scorer = ImageMetric(pil_img, item['caption'])
                     aesthetic_score = scorer.get_aesthetic_score(aes_model=aes_model).item()
                     item['aesthetic_score'] = aesthetic_score
