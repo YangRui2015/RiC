@@ -4,6 +4,8 @@ Code for the ICML 2024 paper "Rewards-in-Context: Multi-objective Alignment of F
 
 This readme file is for LLM tasks, please refer to the 'ric_txt2img' directory for the code for conditional diffusion model training.
 
+**Note:** We have updated the code to include the EOS token in data preparation for SFT and RiC, which helps resolve the issue of non-ending generation. As a result, the model can produce more natural responses, although the results may differ from the paper. If you wish to achieve the exact performance in the paper, please use an old version prior to November 3, 2024.
+
 ## 1. Installation
 Install the requirements.
 ```
