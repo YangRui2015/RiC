@@ -135,7 +135,7 @@ def build_dataset(path, tokenizer, split='train', size=None):
         split_text = sample['text'].split('\n\nAssistant:')
         sample['prompt'] = '\n\nAssistant:'.join(split_text[:-1]) + ' ' + '\n\nAssistant:'
         sample['response'] = split_text[-1].strip()
-        sample["input_ids"] = tokenizer.encode(sample["text"])
+        sample["input_ids"] = tokenizer.encode(sample["text"]) + [tokenizer.eos_token_id]
         sample["query"] = tokenizer.decode(sample["input_ids"])
         return sample
 
@@ -162,7 +162,7 @@ def build_dataset_summary(path, tokenizer, split='train', size=None):
         sample["prompt"] = prompt_summary
         choice = sample["choice"] # select the best summary
         sample["response"] = sample["summaries"][choice]["text"].replace("\n", " ").strip()
-        sample["input_ids"] = tokenizer.encode(prompt_summary + sample["response"])
+        sample["input_ids"] = tokenizer.encode(prompt_summary + sample["response"]) + [tokenizer.eos_token_id]
         sample["query"] = tokenizer.decode(sample["input_ids"])
         return sample
 
@@ -186,10 +186,10 @@ def build_dataset_eval(path, tokenizer,rm_tokenizer1,rm_tokenizer2, split='test'
         split_text = sample['text'].split('\n\nAssistant:')
         sample['prompt'] = '\n\nAssistant:'.join(split_text[:-1]) + ' ' + '\n\nAssistant:'
         sample['response'] = split_text[-1].strip()
-        sample["input_ids"] = tokenizer.encode(sample["prompt"])
+        sample["input_ids"] = tokenizer.encode(sample["prompt"])  # only prompt, no eos
         sample["query"] = tokenizer.decode(sample["input_ids"])
-        sample["input_ids_rm1"] = rm_tokenizer1.encode(sample["prompt"])
-        sample["input_ids_rm2"] = rm_tokenizer2.encode(sample["prompt"])
+        sample["input_ids_rm1"] = rm_tokenizer1.encode(sample["prompt"]) 
+        sample["input_ids_rm2"] = rm_tokenizer2.encode(sample["prompt"]) 
         return sample
 
     ds_chosen = ds.map(tokenize, batched=False, num_proc=20)
@@ -226,7 +226,7 @@ def build_dataset_summary_eval(path, tokenizer, rm_tokenizer1,rm_tokenizer2, spl
         info_post = sample["info"]["post"].replace("\n", " ")
         prompt_summary = Instructions_summary.prompt_input(info_post)
         sample["prompt"] = prompt_summary
-        sample["input_ids"] = tokenizer.encode(prompt_summary)
+        sample["input_ids"] = tokenizer.encode(prompt_summary) 
         sample["query"] = tokenizer.decode(sample["input_ids"])
         return sample
 

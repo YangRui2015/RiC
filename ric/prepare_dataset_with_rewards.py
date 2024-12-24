@@ -158,7 +158,7 @@ def add_score_summary(sample):
     for i in range(instructions.num_rewards):
         sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(round(sample['score{}'.format(i+1)], 1)) + ' '
     sample['prompt_with_score'] += '### Response:'
-    sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+    sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response']) + [tokenizer.eos_token_id]
     sample["query"] = tokenizer.decode(sample["input_ids"])
     return sample
 
@@ -167,8 +167,8 @@ def add_score_assistant(sample):
     for i in range(instructions.num_rewards):
         sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(round(sample['score{}'.format(i+1)], 1)) + ' '
     sample['prompt_with_score'] += '\n\nAssistant:'
-    sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
-    sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+    sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score']) 
+    sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response']) + [tokenizer.eos_token_id]
     sample["query"] = tokenizer.decode(sample["input_ids"])
     return sample
 
@@ -180,6 +180,7 @@ if script_args.exp_type == 'assistant':
 else:
     instructions = Instructions_summary_n(n)
     train_data = build_dataset_summary(gpu_id, tokenizer, rm_tokenizers, 'train')
+
 
 # normalize dataset and save information
 if Accelerator().num_processes == 1:

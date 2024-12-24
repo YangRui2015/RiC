@@ -111,8 +111,8 @@ for i in range(script_args.num_online_iterations):
     else:
         peft_name = checkpoint_path
 
-    ### generation
-    if script_args.num_generation_samples > 0:
+    # ### generation
+    if script_args.num_generation_samples > 0 and not os.path.exists(os.path.join(checkpoint_path, 'data.csv')):
         generate_data(
             model_path,
             reward_model_path_list=reward_model_path_list,
@@ -133,6 +133,7 @@ for i in range(script_args.num_online_iterations):
     merged_data, online_dataset = merge_dataset(dataset, online_dataset, checkpoint_path, tokenizer_name, 
                                                 info_path=info_path, exp_type=exp_type, quantile_threshold=script_args.quantile_threshold,
                                                 sample_origin=script_args.num_origin_samples)
+
     train_model(
         base_model_name=model_path,
         peft_name=peft_name,

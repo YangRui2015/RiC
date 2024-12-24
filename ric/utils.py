@@ -194,9 +194,9 @@ def build_dataset_with_preference(path, tokenizer, rm_tokenizer1, rm_tokenizer2,
     def add_score(sample):
         sample['prompt_with_score'] = sample['prompt'].rstrip('\n\nAssistant:') + ' ' + Instructions.score_split1 + ' ' + str(sample['score1']) + ' '  \
                                                 + ' ' + Instructions.score_split2 + ' ' + str(sample['score2']) + ' ' + '\n\nAssistant:'
-        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
-        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
-        sample["query"] = tokenizer.decode(sample["input_ids"])
+        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])  # prompt, no eos
+        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response']) + [tokenizer.eos_token_id]
+        sample["query"] = tokenizer.decode(sample["input_ids"]) 
         return sample
 
     ds = ds.map(add_score, batched=False, num_proc=20)
@@ -244,8 +244,8 @@ def build_dataset_with_preference_n(path, tokenizer, rm_tokenizers, preference, 
         for i in range(n):
             sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(sample['score{}'.format(i+1)]) + ' '  
         sample['prompt_with_score'] += '\n\nAssistant:'
-        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
-        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score']) # prompt, no eos
+        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response']) + [tokenizer.eos_token_id]
         sample["query"] = tokenizer.decode(sample["input_ids"])
         return sample
 
@@ -309,8 +309,8 @@ def build_summary_dataset_with_preference_n(path, tokenizer, rm_tokenizers, pref
         for i in range(instructions.num_rewards):
             sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(round(sample['score{}'.format(i+1)], 1)) + ' '
         sample['prompt_with_score'] += '### Response:'
-        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
-        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score']) # prompt, no eos
+        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response']) + [tokenizer.eos_token_id]
         sample["query"] = tokenizer.decode(sample["input_ids"])
         return sample
 
@@ -368,12 +368,12 @@ def build_dataset(data_path, tokenizer, reward_model_list, rm_tokenizer, split='
     def add_score(sample):
         sample['prompt_with_score'] = sample['prompt'].rstrip('\n\nAssistant:') + ' ' + Instructions.score_split1 + ' ' + str(sample['score1']) + ' '  \
                                                 + ' ' + Instructions.score_split2 + ' ' + str(sample['score2']) + ' ' + '\n\nAssistant:'
-        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
-        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score']) # prompt, no eos
+        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response']) + [tokenizer.eos_token_id]
         sample["query"] = tokenizer.decode(sample["input_ids"])
         return sample
 
-    ds_concat = ds_concat.map(add_score, batched=False, num_proc=20)
+    ds_concat = ds_concat.map(add_score, batched=False, num_proc=20) 
     ds_concat.set_format(type="torch")
     return ds_concat, mean_reward1, std_reward1, mean_reward2, std_reward2
 
@@ -533,7 +533,7 @@ def reset_score_in_dataset(dataset, tokenizer, rewards_list=None, exp_type='assi
         for i in range(n):
             sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(np.round(sample['score{}'.format(i+1)].item(), 1)) + ' '  
         sample['prompt_with_score'] += instructions.response_split
-        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
+        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score']) 
         return sample
     return dataset.map(add_score, batched=False, num_proc=20)
 
@@ -550,8 +550,8 @@ def dataset_from_csv(checkpoint_path, tokenizer):
         sample['text'] = sample['prompt'] + ' ' + sample['response']
         sample['prompt_with_score'] = sample['prompt'].rstrip('\n\nAssistant:') + ' ' + Instructions.score_split1 + ' ' + str(sample['score1']) + ' '  \
                                                 + ' ' + Instructions.score_split2 + ' ' + str(sample['score2']) + ' ' + '\n\nAssistant:'
-        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
-        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score']) 
+        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response']) + [tokenizer.eos_token_id]
         sample["query"] = tokenizer.decode(sample["input_ids"])
         return sample
 
@@ -596,8 +596,8 @@ def dataset_from_csv_n(checkpoint_path, tokenizer, exp_type='assistant', quantil
         for i in range(num_scores):
             sample['prompt_with_score'] += ' ' + instructions.score_splits[i] + ' ' + str(sample['score{}'.format(i+1)])
         sample['prompt_with_score'] += ' ' + instructions.response_split
-        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
-        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score']) 
+        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response']) + [tokenizer.eos_token_id]
         sample["query"] = tokenizer.decode(sample["input_ids"])
         return sample
 
@@ -611,7 +611,7 @@ def merge_dataset(dataset, online_dataset, save_path, tokenizer_name, info_path=
     tokenizer = load_main_tokenizer(tokenizer_name)
     if type(dataset) == str:
         dataset = load_from_disk(dataset)
-
+    
     ## select frontier dataset
     dataset = select_data_with_quantile(dataset, quantile_threshold)
     if sample_origin is not None:
@@ -630,7 +630,7 @@ def merge_dataset(dataset, online_dataset, save_path, tokenizer_name, info_path=
     if len(selected_dataset):
         merged_dataset = concatenate_datasets([selected_dataset, online_dataset])
     else: 
-         merged_dataset = online_dataset
+        merged_dataset = online_dataset
     print('Size of merged dataset: {}'.format(len(merged_dataset)))
     # merged_dataset.save_to_disk(save_to_path)
     return merged_dataset, online_dataset
@@ -675,12 +675,12 @@ def balancing_rewards(train_dataset, tokenizer, info_path=None, exp_type='assist
                 sample[key] = np.round(np.clip(ratio2 * sample[key], -4, 4), 1)
             sample['prompt_with_score'] += instructions.score_splits[i] + ' ' + str(np.round(sample['score{}'.format(i+1)].item(), 1)) + ' '  
         sample['prompt_with_score'] += instructions.response_split
-        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score'])
-        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response'])
+        sample['prompt_with_score_ids'] = tokenizer.encode(sample['prompt_with_score']) 
+        sample["input_ids"] = tokenizer.encode(sample["prompt_with_score"] + ' ' + sample['response']) + [tokenizer.eos_token_id]
         sample["query"] = tokenizer.decode(sample["input_ids"])
         return sample
     
-    train_dataset = train_dataset.map(add_score, batched=False, num_proc=30)
+    train_dataset = train_dataset.map(add_score, batched=False, num_proc=20)
     return train_dataset, info
 
 
