@@ -101,10 +101,12 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch eval_rewarded_soups.py --reward_n
 ## 3. Citation
 If you find our work useful for your research, please cite:
 ```
-@article{yang2024rewards,
+@inproceedings{yang2024rewards,
   title={Rewards-in-Context: Multi-objective Alignment of Foundation Models with Dynamic Preference Adjustment},
   author={Yang, Rui and Pan, Xiaoman and Luo, Feng and Qiu, Shuang and Zhong, Han and Yu, Dong and Chen, Jianshu},
-  journal={International Conference on Machine Learning},
-  year={2024}
+  booktitle={International Conference on Machine Learning},
+  pages={56276--56297},
+  year={2024},
+  organization={PMLR}
 }
 ```
